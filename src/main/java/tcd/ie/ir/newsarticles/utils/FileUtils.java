@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 public class FileUtils {
 	
 	private static final String CURRENT_USER_DIRECTORY = System.getProperty("user.dir");
+    private static final String DATA_FOLDER_PATH = CURRENT_USER_DIRECTORY + "/data/";
     private static final String FBIS_DOCUMENTS_PATH = CURRENT_USER_DIRECTORY + "/data/fbis/";
     private static final String FR94_DOCUMENTS_PATH = CURRENT_USER_DIRECTORY + "/data/fr94/";
     private static final String FT_DOCUMENTS_PATH = CURRENT_USER_DIRECTORY + "/data/ft/";
@@ -84,5 +85,9 @@ public class FileUtils {
 
 	public static String getLatimesDocumentsPath() {
 		return LATIMES_DOCUMENTS_PATH;
+	}
+
+	public static String getDataFolderPath() {
+		return DATA_FOLDER_PATH;
 	}
 }

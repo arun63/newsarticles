@@ -18,16 +18,14 @@ public class EntryPoint
 		
 		FileUtils.createAllReqDir();
 
-		final File fbisDocDir = new File(FileUtils.getFbisDocumentsPath());
-		
-		//final File latimesDocDir = new File(FileUtils.getLatimesDocumentsPath());
+		final File docsDir = new File(FileUtils.getDataFolderPath());
 
 		long sTime = System.currentTimeMillis();		
 		SearchIndexer searchIndex;
 		try {
 			searchIndex = new SearchIndexer(FileUtils.getDocIndexPath());
 			searchIndex.configuration();
-			searchIndex.invokeDocsIndex(fbisDocDir);
+			searchIndex.invokeDocsIndex(docsDir);
 			searchIndex.close();
 			
 		} catch (IOException e) {
