@@ -81,7 +81,7 @@ public class DocumentParser implements Iterator<Document>{
 	}
 	
 	private Matcher getDocNumMatcher(String line) {
-		Pattern docNumTag = Pattern.compile(FileUtils.getFbisDocPattern());
+		Pattern docNumTag = Pattern.compile(FileUtils.getDocNumPattern());
 		return docNumTag.matcher(line); 
 	}
 }

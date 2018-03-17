@@ -21,6 +21,7 @@ public class FileUtils {
     private static final String FT_DOCUMENTS_PATH = CURRENT_USER_DIRECTORY + "/data/ft/";
     private static final String LATIMES_DOCUMENTS_PATH = CURRENT_USER_DIRECTORY + "/data/latimes/";
     private static final String DOC_INDEX_PATH = CURRENT_USER_DIRECTORY + "/index/";
+    private static final String QUERY_FILE_PATH = CURRENT_USER_DIRECTORY + "/test/topics.401-450";
     private static final String RESULTANT_PATH = CURRENT_USER_DIRECTORY + "/test/results";
     private static final String RESULTANT_FILENAME = "/resultant";
     
@@ -28,10 +29,22 @@ public class FileUtils {
     //Tag
     public static final String START_DOC_TAG = "<DOC>";
     public static final String END_DOC_TAG = "</DOC>";
+    public static final String TOP_START_TAG = "<top>";
+    public static final String TOP_END_TAG = "</top>";
+    public static final String NUM_START_TAG = "<num>";
+    public static final String NUM_END_TAG = "</num>";
+    public static final String TITLE_START_TAG = "<title>";
+    public static final String TITLE_END_TAG = "</title>";
+    public static final String DESC_START_TAG = "<desc>";
+    public static final String DESC_END_TAG = "</desc>";
+    public static final String NARR_START_TAG = "<narr>";
+    public static final String NARR_END_TAG = "</narr>";
     
     
     // Pattern Matching
-    private static final String FBIS_DOC_PATTERN = "<DOCNO>\\s*(\\S+)\\s*<";
+    private static final String DOC_NUM_PATTERN = "<DOCNO>\\s*(\\S+)\\s*<";
+    private static final String QUERY_NUM_PATTERN = "<num>\\s*(\\S+)\\s*(\\d+)\\s*";
+    private static final String QUERY_NORMALIZE_PATTERN = "[/\\(\\)\\?-]";
     
     public static void createDirectories(String path) {
 		Path p = Paths.get(path);
@@ -71,8 +84,8 @@ public class FileUtils {
 		return FBIS_DOCUMENTS_PATH;
 	}
 
-	public static String getFbisDocPattern() {
-		return FBIS_DOC_PATTERN;
+	public static String getDocNumPattern() {
+		return DOC_NUM_PATTERN;
 	}
 
 	public static String getFr94DocumentsPath() {
@@ -90,4 +103,17 @@ public class FileUtils {
 	public static String getDataFolderPath() {
 		return DATA_FOLDER_PATH;
 	}
+
+	public static String getQueryFilePath() {
+		return QUERY_FILE_PATH;
+	}
+
+	public static String getQueryNumPattern() {
+		return QUERY_NUM_PATTERN;
+	}
+
+	public static String getQueryNormalizePattern() {
+		return QUERY_NORMALIZE_PATTERN;
+	}
+	
 }

@@ -58,6 +58,10 @@ public class SearchIndexer {
 		}
 	}
     
+    public void invokeQueryIndex(File queryFile) {
+    	
+    }
+    
     public void close() throws IOException {
         indexWriter.close();
     }
