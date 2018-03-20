@@ -1,10 +1,13 @@
 package tcd.ie.ir.newsarticles;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -97,15 +100,25 @@ public class EntryPoint
 	    	QueryParser queryParser = new QueryParser(field,analyzer);
 	    	TopDocs results = searcher.search(queryParser.parse(query), 100);
 	        ScoreDoc[] hits = results.scoreDocs;
+	        
 	        File file = new File(FileUtils.getResultantPath()+"/results");
-	        PrintWriter pw = new PrintWriter(file);
+	        //PrintWriter pw = new PrintWriter(file);
+	        BufferedWriter output = null;
+        	//File file1 = new File("example.txt");
+            output = new BufferedWriter(new FileWriter(file));
+            
+            //Files.deleteIfExists("example.txt");
 	        for(int i=0;i<hits.length;i++) {
 	        	int s = hits[i].doc;
 	        	Document d = searcher.doc(s);
 	        	int j = i+1;
-	        	pw.println(querynumber + " Q0 " +  d.get("ID") + " " + j + " " + hits[i].score + " STANDARD");
-	        	pw.flush();
+	        	
+	            output.write(querynumber + " Q0 " +  d.get("ID") + " " + j + " " + hits[i].score + " STANDARD" + "\n");
+	            
+	        	//pw.println(querynumber + " Q0 " +  d.get("ID") + " " + j + " " + hits[i].score + " STANDARD");
+	        	//pw.flush();
 	        }
+	        output.close();
 	        int numTotalHits = Math.toIntExact(results.totalHits);
 	        System.out.println(numTotalHits + " total matching documents");
 	    }
