@@ -29,7 +29,6 @@ public class DocumentParser implements Iterator<Document>{
 	
 	public DocumentParser(File file) throws FileNotFoundException {
 		bufferReader = new BufferedReader(new FileReader(file));
-		System.out.println("Parsing " + file.getName());
 	}
 	
 	public boolean hasNext() {
@@ -66,13 +65,13 @@ public class DocumentParser implements Iterator<Document>{
 				Matcher matcher = getDocNumMatcher(line);
 				if (matcher.find()) {
 					String docNum = matcher.group(1);
-					document.add(new StringField("docNum", docNum, Field.Store.YES));
+					document.add(new StringField(FileUtils.getDocnumIndex(), docNum, Field.Store.YES));
 				}
 				
 				stringBuilder.append(line);
 			}
 			if (stringBuilder.length() > 0)
-				document.add(new TextField("contents", stringBuilder.toString(), Field.Store.NO));
+				document.add(new TextField(FileUtils.getContentsIndex(), stringBuilder.toString(), Field.Store.NO));
 			
 		} catch (IOException e) {
 			document = null;

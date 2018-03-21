@@ -46,6 +46,12 @@ public class FileUtils {
     private static final String QUERY_NUM_PATTERN = "<num>\\s*(\\S+)\\s*(\\d+)\\s*";
     private static final String QUERY_NORMALIZE_PATTERN = "[/\\(\\)\\?-]";
     
+    
+    //Indexer
+    private static final String DOCNUM_INDEX = "docNum";
+    private static final String CONTENTS_INDEX = "contents";
+    
+    
     public static void createDirectories(String path) {
 		Path p = Paths.get(path);
         if (!Files.exists(p)) {
@@ -114,6 +120,14 @@ public class FileUtils {
 
 	public static String getQueryNormalizePattern() {
 		return QUERY_NORMALIZE_PATTERN;
+	}
+
+	public static String getDocnumIndex() {
+		return DOCNUM_INDEX;
+	}
+
+	public static String getContentsIndex() {
+		return CONTENTS_INDEX;
 	}
 	
 }
