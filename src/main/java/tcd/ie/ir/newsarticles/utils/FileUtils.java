@@ -24,6 +24,11 @@ public class FileUtils {
     private static final String QUERY_FILE_PATH = CURRENT_USER_DIRECTORY + "/test/topics.401-450";
     private static final String RESULTANT_PATH = CURRENT_USER_DIRECTORY + "/test/results";
     private static final String RESULTANT_FILENAME = "/resultant";
+    private static final String NLP_MODEL_FOLDER = CURRENT_USER_DIRECTORY + "/models/";
+    private static final String NLP_MODEL_WSJ = NLP_MODEL_FOLDER + "wsj-0-18-left3words-nodistsim.tagger";
+    private static final String NLP_MODLE_WSJ_PROPS = NLP_MODEL_FOLDER + "wsj-0-18-left3words-nodistsim.tagger.props";
+    private static final String NLP_MODEL_EN_DIST = NLP_MODEL_FOLDER + "english-left3words-distsim.tagger";
+    private static final String NLP_MODEL_EN_DIST_PROPS = NLP_MODEL_FOLDER + "english-left3words-distsim.tagger.props";
     
     
     //Tag
@@ -128,6 +133,22 @@ public class FileUtils {
 
 	public static String getContentsIndex() {
 		return CONTENTS_INDEX;
+	}
+
+	public static String getNlpModelWsj() {
+		return NLP_MODEL_WSJ;
+	}
+
+	public static String getNlpModleWsjProps() {
+		return NLP_MODLE_WSJ_PROPS;
+	}
+
+	public static String getNlpModelEnDistProps() {
+		return NLP_MODEL_EN_DIST_PROPS;
+	}
+
+	public static String getNlpModelEnDist() {
+		return NLP_MODEL_EN_DIST;
 	}
 	
 }

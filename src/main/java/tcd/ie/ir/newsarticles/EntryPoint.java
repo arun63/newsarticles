@@ -34,6 +34,7 @@ public class EntryPoint
 		long sTime = System.currentTimeMillis();		
 		SearchIndexer searchIndex;
 		try {
+			System.out.println("Parsing and indexing the documents");
 			searchIndex = new SearchIndexer(FileUtils.getDocIndexPath());
 			searchIndex.configuration();
 			searchIndex.invokeDocsIndex(docsDir);
@@ -43,7 +44,7 @@ public class EntryPoint
 			e.printStackTrace();
 		}
 
-		System.out.println((System.currentTimeMillis() - sTime)/1000 + " total sec");
+		System.out.println("Indexing the document took: " + (System.currentTimeMillis() - sTime)/1000 + " total sec");
 		
 		
 		final File queryFile = new File(FileUtils.getQueryFilePath());
@@ -60,8 +61,7 @@ public class EntryPoint
 		}
 
 		// Print the query output
-		printOutput(queryObj);
-		
+		//printOutput(queryObj);	
 		
 		try {
 			invokeQuerySearch(queryObj);
@@ -79,7 +79,7 @@ public class EntryPoint
 		String fileToWrite = FileUtils.getResultantPath() + "/" + fileName;
         FileUtils.checkFileExists(fileToWrite);
         FileWriter resultSet = new FileWriter(fileToWrite);
-        System.out.println(fileName + " Processing the queries");
+        System.out.println("Processing the queries");
         
         for(Map.Entry<Integer, QueryObject> queryMap : queryObj.entrySet()) {
         		
@@ -94,7 +94,7 @@ public class EntryPoint
                 resultSet.write(result);
         	
         }
-        System.out.println(fileName + " finished processing the queries");
+        System.out.println("Finished processing the queries - resultant path: " + fileToWrite);
         resultSet.close();  
 	}
 	
