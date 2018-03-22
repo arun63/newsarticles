@@ -15,12 +15,15 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 
+import tcd.ie.ir.newsarticles.entity.QueryObject;
 import tcd.ie.ir.newsarticles.entity.ResultantObject;
 import tcd.ie.ir.newsarticles.parser.DocumentParser;
 import tcd.ie.ir.newsarticles.utils.FileUtils;
@@ -69,34 +72,54 @@ public class SearchIndexer {
 		}
 	}
     
-    public static ArrayList<ResultantObject> invokeSearch(String searchQuery) throws IOException, ParseException {
+    public static ArrayList<ResultantObject> invokeSearch(QueryObject searchQuery) throws IOException, ParseException {
     	
-    		DirectoryReader indexDirReader = DirectoryReader.open(indexFSDir);
-        IndexSearcher indexSearcher = new IndexSearcher(indexDirReader);
-        String fieldsArr[] = {"contents"};
-        String qString = normalize(searchQuery);
-        Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer());       
-            
-        QueryParser queryParser = new MultiFieldQueryParser(fieldsArr, analyzer);
-        Query query = queryParser.parse(qString);
-        TopDocs topDocs = indexSearcher.search(query, 1000);
-        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-        ArrayList<ResultantObject> resultDocs = new ArrayList<>();
-        int i = 1;
-        for (ScoreDoc scoreDoc: scoreDocs) {
-            String currentID = indexSearcher.doc(scoreDoc.doc).get(FileUtils.getDocnumIndex());
-            ResultantObject currentDoc = new ResultantObject(currentID, scoreDoc.score, i++);
-            resultDocs.add(currentDoc);
-        }
-        
-        return resultDocs;     
-    }
+		DirectoryReader indexDirReader = DirectoryReader.open(indexFSDir);
+	    IndexSearcher indexSearcher = new IndexSearcher(indexDirReader);
+	    String fieldsArr[] = {"contents"}; 
+	    Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer());               
+	    QueryParser queryParser = new MultiFieldQueryParser(fieldsArr, analyzer);
+	    BooleanQuery query = multipleFieldQuery(searchQuery, queryParser);  
+	    TopDocs topDocs = indexSearcher.search(query, 5);
+	    ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+	    ArrayList<ResultantObject> resultDocs = new ArrayList<>();
+	    int i = 1;
+	    for (ScoreDoc scoreDoc: scoreDocs) {
+	        String currentID = indexSearcher.doc(scoreDoc.doc).get(FileUtils.getDocnumIndex());
+	        ResultantObject currentDoc = new ResultantObject(currentID, scoreDoc.score, i++);
+	        resultDocs.add(currentDoc);
+	    }
+	    
+	    return resultDocs;     
+	}
+    
+    public static BooleanQuery multipleFieldQuery(QueryObject queryObj,QueryParser queryParser) throws ParseException {
+		
+    		String title = queryObj.getTitle();
+		String desc = queryObj.getDesc();
+		String narr = queryObj.getNarr();
+		
+		String nTitle = normalize(title);
+		String nDesc = normalize(desc);
+		String nNarr = normalize(narr);
+		
+		BoostQuery qTitle = new BoostQuery(queryParser.parse(nTitle), 2);		
+		BoostQuery qDesc = new BoostQuery(queryParser.parse(nDesc), 2);
+		BoostQuery qNarr = new BoostQuery(queryParser.parse(nNarr), 2);
+		
+		BooleanQuery booleanQuery = new BooleanQuery.Builder()
+				.add(qTitle, BooleanClause.Occur.MUST)
+				.add(qDesc, BooleanClause.Occur.MUST)
+				.add(qNarr, BooleanClause.Occur.MUST)
+				.build();	
+		
+		return booleanQuery;
+	}
     
     
     private static String normalize(String query) {
-		return QueryParser.escape(query);
+    		return QueryParser.escape(query);	
 	}
-    
     
     public void close() throws IOException {
         indexWriter.close();

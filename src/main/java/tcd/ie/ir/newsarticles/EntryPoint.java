@@ -60,7 +60,7 @@ public class EntryPoint
 		}
 
 		// Print the query output
-		//printOutput(queryObj);
+		printOutput(queryObj);
 		
 		
 		try {
@@ -85,8 +85,7 @@ public class EntryPoint
         		
         		QueryObject query = queryMap.getValue();
         		String result = "";
-                String queryString = query.getTitle();
-                ArrayList<ResultantObject> resultList = SearchIndexer.invokeSearch(queryString);
+                ArrayList<ResultantObject> resultList = SearchIndexer.invokeSearch(query);
                 for (ResultantObject currentResult: resultList) {
                     resultSet.append(query.getNum()).append(" Q0 ").append(currentResult.getrId());
                     resultSet.append(" ").append(String.valueOf(currentResult.getRank())).append(" ");
@@ -95,7 +94,7 @@ public class EntryPoint
                 resultSet.write(result);
         	
         }
-        System.out.println(fileName + " Finished processing the queries");
+        System.out.println(fileName + " finished processing the queries");
         resultSet.close();  
 	}
 	
@@ -104,6 +103,5 @@ public class EntryPoint
 			System.out.println(entry.getValue().toString());
 		}
 	}
-	
 	
 }
