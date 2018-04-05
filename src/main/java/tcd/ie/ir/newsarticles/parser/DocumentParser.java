@@ -79,6 +79,14 @@ public class DocumentParser implements Iterator<Document>{
 		return document;
 	}
 	
+	public void closeReader(File file) {
+		try {
+			bufferReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private Matcher getDocNumMatcher(String line) {
 		Pattern docNumTag = Pattern.compile(FileUtils.getDocNumPattern());
 		return docNumTag.matcher(line); 

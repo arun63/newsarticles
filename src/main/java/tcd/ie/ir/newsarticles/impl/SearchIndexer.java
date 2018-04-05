@@ -1,21 +1,30 @@
 package tcd.ie.ir.newsarticles.impl;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -26,9 +35,17 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.store.FSDirectory;
 
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import edu.stanford.nlp.util.CoreMap;
+import tcd.ie.ir.newsarticles.anasim.CustomizeAnalyzer;
+import tcd.ie.ir.newsarticles.anasim.StandardAnalyzerInstance;
 import tcd.ie.ir.newsarticles.entity.QueryObject;
 import tcd.ie.ir.newsarticles.entity.ResultantObject;
 import tcd.ie.ir.newsarticles.parser.DocumentParser;
@@ -50,10 +67,12 @@ public class SearchIndexer {
     }
     
     public void configuration() throws IOException {
-        Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer());
+    		Map<String, Analyzer> map = new HashMap<>();
+    		map.put("Abstract", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
+    		Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));   
         IndexWriterConfig iwConfig = new IndexWriterConfig(analyzer);   
         iwConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        //iwConfig.setSimilarity(new ClassicSimilarity());
+        iwConfig.setSimilarity(new ClassicSimilarity());
         iwConfig.setRAMBufferSizeMB(256.0);
         indexWriter = new IndexWriter(indexFSDir, iwConfig);
     }
@@ -72,9 +91,12 @@ public class SearchIndexer {
 				Document doc;
 				while (allDocs.hasNext()) {
 					doc = allDocs.next();
-					if (doc != null && doc.getField(FileUtils.getContentsIndex()) != null)
-						indexWriter.addDocument(doc);
+					if (doc != null && doc.getField(FileUtils.getContentsIndex()) != null) {
+						indexWriter.updateDocument(new Term(FileUtils.getDocnumIndex()), doc);
+						//indexWriter.addDocument(doc);
+					}	
 				}
+				allDocs.closeReader(docsPath);
 			}
 		}
 	}
@@ -83,9 +105,11 @@ public class SearchIndexer {
     	
 		DirectoryReader indexDirReader = DirectoryReader.open(indexFSDir);
 	    IndexSearcher indexSearcher = new IndexSearcher(indexDirReader);
-	    //indexSearcher.setSimilarity(new ClassicSimilarity());
-	    String fieldsArr[] = {"contents"}; 
-	    Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer());               
+	    indexSearcher.setSimilarity(new ClassicSimilarity());
+	    String fieldsArr[] = {"contents"};
+	    Map<String, Analyzer> map = new HashMap<>();
+	    map.put("Abstract", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
+	    Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));                
 	    QueryParser queryParser = new MultiFieldQueryParser(fieldsArr, analyzer);
 	    Query query = multipleFieldQuery(searchQuery, queryParser);  
 	    TopDocs topDocs = indexSearcher.search(query, 1000);
@@ -114,22 +138,22 @@ public class SearchIndexer {
 		
 		nStrings.add(nTitle);
 		nStrings.add(nDesc);
-		nStrings.add(nNarr);
+		//nStrings.add(nNarr);
 		
-		BoostQuery qTitle = new BoostQuery(queryParser.parse(nTitle),  (float) 0.5);		
-		BoostQuery qDesc = new BoostQuery(queryParser.parse(nDesc), (float) 1.2);
+		BoostQuery qTitle = new BoostQuery(queryParser.parse(nTitle),  (float) 2);		
+		BoostQuery qDesc = new BoostQuery(queryParser.parse(nDesc), (float) 2);
 		BoostQuery qNarr = new BoostQuery(queryParser.parse(nNarr), (float) 2);
 		
 		/*List<String> tagStrings = getTaggerString(nStrings);
 		//System.out.println("Tags: " + tagStrings.toString());
 		BoostQuery qTitle = new BoostQuery(queryParser.parse(tagStrings.get(0)),  (float) 0.5);		
 		BoostQuery qDesc = new BoostQuery(queryParser.parse(tagStrings.get(1)), (float) 1.2);
-		BoostQuery qNarr = new BoostQuery(queryParser.parse(tagStrings.get(2)), (float) 2); */
+		//BoostQuery qNarr = new BoostQuery(queryParser.parse(tagStrings.get(2)), (float) 2); */
 		
 		BooleanQuery booleanQuery = new BooleanQuery.Builder()
 				.add(qTitle, BooleanClause.Occur.SHOULD)
 				.add(qDesc, BooleanClause.Occur.SHOULD)
-				.add(qNarr, BooleanClause.Occur.SHOULD)
+				//.add(qNarr, BooleanClause.Occur.SHOULD)
 				.build();	
 		
 		return booleanQuery;
@@ -142,16 +166,39 @@ public class SearchIndexer {
     		for(String toTag : toTags) {
     			toTag = tokenizer(toTag);
     			System.out.println(toTag);
+    			annotationNLP(toTag);
     			taggedString.add(maxTagger.tagString(toTag));
     		}
     		
     		return taggedString;
     }
 
-	public static MaxentTagger loadNLPLibrary() {
+    public static void annotationNLP(String toTag) {
+    	
+    	Properties props = new Properties();
+
+		props.setProperty("annotators","tokenize, ssplit, pos");
+
+		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		Annotation annotation = new Annotation(toTag);
+		pipeline.annotate(annotation);
+		List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+		for (CoreMap sentence : sentences) {
+		    for (CoreLabel token: sentence.get(CoreAnnotations.TokensAnnotation.class)) {
+		        String word = token.get(CoreAnnotations.TextAnnotation.class);
+		        // this is the POS tag of the token
+		        String pos = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+		        System.out.println(word + "/" + pos);
+		    }
+		}
+    }
+	
+    public static MaxentTagger loadNLPLibrary() {
     		MaxentTagger maxTagger = null;
     		try {
-    				maxTagger = new MaxentTagger("edu/stanford/nlp/models/pos-tagger/english-left3words/english-left3words-distsim.tagger");
+    			maxTagger = new MaxentTagger("edu/stanford/nlp/models/pos-tagger/english-left3words/english-left3words-distsim.tagger");
+    			
+    			//maxTagger = new MaxentTagger("models/left3words-wsj-0-18.tagger");
     				//maxTagger = new MaxentTagger(FileUtils.getNlpModelEnDist(), 
 				//		loadNLPProperties(FileUtils.getNlpModelEnDistProps()));
 			} catch (Exception e) {
@@ -175,6 +222,8 @@ public class SearchIndexer {
 		}
 		return sb.toString();
 	}
+	
+	
     
     public static Properties loadNLPProperties(String fileName) throws IOException {
     		Properties props = new Properties();

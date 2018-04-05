@@ -27,7 +27,7 @@ public class EntryPoint
 {
 	public static void main(String[] args) { 
 		
-		FileUtils.createAllReqDir();
+		FileUtils.createAllReqDir(true);
 
 		final File docsDir = new File(FileUtils.getDataFolderPath());
 
@@ -48,7 +48,7 @@ public class EntryPoint
 		
 		
 		final File queryFile = new File(FileUtils.getQueryFilePath());
-		QueryDocParser queryDocParser;
+		QueryDocParser queryDocParser = null;
 		Map<Integer, QueryObject> queryObj = new LinkedHashMap<Integer, QueryObject>();
 		try {
 			queryDocParser = new QueryDocParser(queryFile);
@@ -58,6 +58,8 @@ public class EntryPoint
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
+		} finally {
+			queryDocParser.closeReader(queryFile);
 		}
 
 		// Print the query output

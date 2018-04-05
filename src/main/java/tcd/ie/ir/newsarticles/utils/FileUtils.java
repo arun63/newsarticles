@@ -1,10 +1,15 @@
 package tcd.ie.ir.newsarticles.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+
+import org.apache.lucene.analysis.CharArraySet;
 
 /**
  * 
@@ -25,6 +30,7 @@ public class FileUtils {
     private static final String RESULTANT_PATH = CURRENT_USER_DIRECTORY + "/test/results";
     private static final String RESULTANT_FILENAME = "/resultant";
     private static final String NLP_MODEL_FOLDER = CURRENT_USER_DIRECTORY + "/models/";
+    private static final String STOPWORDS_PATH = CURRENT_USER_DIRECTORY + "/test";
     private static final String NLP_MODEL_WSJ = NLP_MODEL_FOLDER + "wsj-0-18-left3words-nodistsim.tagger";
     private static final String NLP_MODLE_WSJ_PROPS = NLP_MODEL_FOLDER + "wsj-0-18-left3words-nodistsim.tagger.props";
     private static final String NLP_MODEL_EN_DIST = NLP_MODEL_FOLDER + "english-left3words-distsim.tagger";
@@ -57,7 +63,7 @@ public class FileUtils {
     private static final String CONTENTS_INDEX = "contents";
     
     
-    public static void createDirectories(String path) {
+    public static void createDirectories(String path, boolean isReq) {
 		Path p = Paths.get(path);
         if (!Files.exists(p)) {
             try {
@@ -65,8 +71,39 @@ public class FileUtils {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+        		// delete it and then create it
+        		try {
+        				if(isReq) {
+        					deleteDirectory(p);
+        				}
+        				if(!Files.exists(p)) {
+        					Files.createDirectories(p);
+        				}			
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+			}
         }
 	}
+    
+    public static void deleteDirectory(Path directory) throws IOException {
+    		Files.walk(directory)
+        .sorted(Comparator.reverseOrder())
+        .map(Path::toFile)
+        .forEach(File::delete);
+    }
+    
+    public static CharArraySet getStopWordSet() throws IOException {
+        File file = new File(getStopwordsPath() + "/stopwords");
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+        CharArraySet stopWordSet = new CharArraySet(1000, true);
+        while (bufferedReader.ready()) {
+            stopWordSet.add(bufferedReader.readLine());
+        }
+        bufferedReader.close();
+        return stopWordSet;
+    }
     
     public static void checkFileExists(String fileName) throws IOException {
     		File f = new File(fileName);
@@ -75,9 +112,9 @@ public class FileUtils {
         }
     }
     
-    public static void createAllReqDir() {
-		createDirectories(FileUtils.getDocIndexPath());
-		createDirectories(FileUtils.getResultantPath());
+    public static void createAllReqDir(boolean isReq) {
+		createDirectories(FileUtils.getDocIndexPath(), isReq);
+		createDirectories(FileUtils.getResultantPath(), isReq);
 	}
     
 	public static String getResultantPath() {
@@ -149,6 +186,10 @@ public class FileUtils {
 
 	public static String getNlpModelEnDist() {
 		return NLP_MODEL_EN_DIST;
+	}
+
+	public static String getStopwordsPath() {
+		return STOPWORDS_PATH;
 	}
 	
 }

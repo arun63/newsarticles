@@ -95,6 +95,14 @@ public class QueryDocParser {
 		return lHashMap;
 	}
 	
+	public void closeReader(File file) {
+		try {
+			bufferReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private Matcher getQueryNumMatcher(String line) {
 		Pattern docNumTag = Pattern.compile(FileUtils.getQueryNumPattern());
 		return docNumTag.matcher(line); 
