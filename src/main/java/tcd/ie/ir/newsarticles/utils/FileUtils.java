@@ -35,7 +35,8 @@ public class FileUtils {
     private static final String NLP_MODLE_WSJ_PROPS = NLP_MODEL_FOLDER + "wsj-0-18-left3words-nodistsim.tagger.props";
     private static final String NLP_MODEL_EN_DIST = NLP_MODEL_FOLDER + "english-left3words-distsim.tagger";
     private static final String NLP_MODEL_EN_DIST_PROPS = NLP_MODEL_FOLDER + "english-left3words-distsim.tagger.props";
-    
+    private static final String[] allStopWords = new String[] {"are", "or", "the", "of", "to", "has", "by", "for", "as", "at", "an", "and", "that", "there", "have", "do", "be", "what", "i.e.,", "is", "103", "it", "on", "how", "a", "in"};
+	
     
     //Tag
     public static final String START_DOC_TAG = "<DOC>";
@@ -103,6 +104,23 @@ public class FileUtils {
         }
         bufferedReader.close();
         return stopWordSet;
+    }
+    
+    public static String queryStopWords(String query) {
+    		query = query.toLowerCase();
+        for (String stopword : allStopWords) {
+        		query = query.replaceAll("\\b"+stopword+"\\b", "");
+        }
+        query = query.replace("(", "");
+        query = query.replace(")", "");
+        query = query.replace("?", "");
+        query = query.replace(",", "");
+        query = query.replace("\"", "");
+        query = query.replace(".", "");
+        query = query.replace(":", "");
+        query = query.replace("   ", " ");
+        query = query.replace("  ", " ");
+        return query;	
     }
     
     public static void checkFileExists(String fileName) throws IOException {

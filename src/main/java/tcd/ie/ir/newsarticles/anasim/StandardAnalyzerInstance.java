@@ -17,7 +17,7 @@ import org.apache.lucene.analysis.standard.StandardTokenizer;
  *
  */
 
-public class StandardAnalyzerInstance extends StopwordAnalyzerBase {
+public class StandardAnalyzerInstance extends StopwordAnalyzerBase{
 	
 	public StandardAnalyzerInstance(CharArraySet stopwords) {
 		super(stopwords);
@@ -32,7 +32,7 @@ public class StandardAnalyzerInstance extends StopwordAnalyzerBase {
         tokenStream = new StopFilter(tokenStream, stopwords);
         //tokenStream = new KStemFilter(tokenStream);
         //tokenStream = new PorterStemFilter(tokenStream);
-        tokenStream = new PartOfSpeechTaggingFilter(tokenStream);
+        //tokenStream = new PartOfSpeechTaggingFilter(tokenStream);
         tokenStream = new NGramTokenFilter(tokenStream, 3, 5);
         TokenStreamComponents tokenStreamComponents = new TokenStreamComponents(tokenizer, tokenStream);
         return tokenStreamComponents;

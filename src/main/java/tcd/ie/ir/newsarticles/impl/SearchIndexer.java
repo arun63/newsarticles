@@ -1,25 +1,18 @@
 package tcd.ie.ir.newsarticles.impl;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.fr.FrenchAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
@@ -35,7 +28,14 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.AfterEffectL;
+import org.apache.lucene.search.similarities.BasicModelIn;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
+import org.apache.lucene.search.similarities.DFRSimilarity;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.MultiSimilarity;
+import org.apache.lucene.search.similarities.NormalizationH1;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
@@ -44,7 +44,6 @@ import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
-import tcd.ie.ir.newsarticles.anasim.CustomizeAnalyzer;
 import tcd.ie.ir.newsarticles.anasim.StandardAnalyzerInstance;
 import tcd.ie.ir.newsarticles.entity.QueryObject;
 import tcd.ie.ir.newsarticles.entity.ResultantObject;
@@ -68,11 +67,18 @@ public class SearchIndexer {
     
     public void configuration() throws IOException {
     		Map<String, Analyzer> map = new HashMap<>();
-    		map.put("Abstract", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
-    		Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));   
+    		map.put("contents", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
+    		//Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));
+    		Analyzer analyzer = new FrenchAnalyzer();
         IndexWriterConfig iwConfig = new IndexWriterConfig(analyzer);   
         iwConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        iwConfig.setSimilarity(new ClassicSimilarity());
+        Similarity similarity[] = {
+                new ClassicSimilarity(),
+                new DFRSimilarity(new BasicModelIn(), new AfterEffectL(), new NormalizationH1()),
+                new LMDirichletSimilarity(1500)
+        };
+        iwConfig.setSimilarity(new MultiSimilarity(similarity));
+        //iwConfig.setSimilarity(new ClassicSimilarity());
         iwConfig.setRAMBufferSizeMB(256.0);
         indexWriter = new IndexWriter(indexFSDir, iwConfig);
     }
@@ -105,11 +111,18 @@ public class SearchIndexer {
     	
 		DirectoryReader indexDirReader = DirectoryReader.open(indexFSDir);
 	    IndexSearcher indexSearcher = new IndexSearcher(indexDirReader);
-	    indexSearcher.setSimilarity(new ClassicSimilarity());
+	    Similarity similarity[] = {
+                new ClassicSimilarity(),
+                new DFRSimilarity(new BasicModelIn(), new AfterEffectL(), new NormalizationH1()),
+                new LMDirichletSimilarity(1500)
+        };
+	    indexSearcher.setSimilarity(new MultiSimilarity(similarity));
+	    //indexSearcher.setSimilarity(new ClassicSimilarity());
 	    String fieldsArr[] = {"contents"};
 	    Map<String, Analyzer> map = new HashMap<>();
-	    map.put("Abstract", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
-	    Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));                
+	    //map.put("contents", new StandardAnalyzerInstance(FileUtils.getStopWordSet()));
+	    //Analyzer analyzer = new PerFieldAnalyzerWrapper(new EnglishAnalyzer(FileUtils.getStopWordSet()));                
+	    Analyzer analyzer = new FrenchAnalyzer();
 	    QueryParser queryParser = new MultiFieldQueryParser(fieldsArr, analyzer);
 	    Query query = multipleFieldQuery(searchQuery, queryParser);  
 	    TopDocs topDocs = indexSearcher.search(query, 1000);
@@ -138,11 +151,14 @@ public class SearchIndexer {
 		
 		nStrings.add(nTitle);
 		nStrings.add(nDesc);
-		//nStrings.add(nNarr);
+		nStrings.add(nNarr);
 		
-		BoostQuery qTitle = new BoostQuery(queryParser.parse(nTitle),  (float) 2);		
-		BoostQuery qDesc = new BoostQuery(queryParser.parse(nDesc), (float) 2);
-		BoostQuery qNarr = new BoostQuery(queryParser.parse(nNarr), (float) 2);
+		BoostQuery qTitle = new BoostQuery(queryParser.parse(nTitle),  (float) 5);		
+		BoostQuery qDesc = new BoostQuery(queryParser.parse(nDesc), (float) 1.6);
+		BoostQuery qNarr = new BoostQuery(queryParser.parse(nNarr), (float) 0.6);
+		
+		//TermQuery tTitle = new TermQuery(new Term(nTitle));
+		//TermQuery tDesc = new TermQuery(new Term(nDesc));
 		
 		/*List<String> tagStrings = getTaggerString(nStrings);
 		//System.out.println("Tags: " + tagStrings.toString());
@@ -153,7 +169,7 @@ public class SearchIndexer {
 		BooleanQuery booleanQuery = new BooleanQuery.Builder()
 				.add(qTitle, BooleanClause.Occur.SHOULD)
 				.add(qDesc, BooleanClause.Occur.SHOULD)
-				//.add(qNarr, BooleanClause.Occur.SHOULD)
+				.add(qNarr, BooleanClause.Occur.SHOULD)
 				.build();	
 		
 		return booleanQuery;
@@ -236,7 +252,9 @@ public class SearchIndexer {
     
     
     private static String normalize(String query) {
-    		return QueryParser.escape(query);	
+    		String query_sw = FileUtils.queryStopWords(query);
+    		return QueryParser.escape(query_sw);
+    		
 	}
     
     public void close() throws IOException {
